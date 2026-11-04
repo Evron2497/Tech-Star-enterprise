@@ -30,25 +30,50 @@ from flask import (
 # CONFIGURATION
 # ============================================================
 
-# Load .env from the same directory as this app.py.
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ENV_FILE = os.path.join(BASE_DIR, ".env")
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Get the directory containing app.py
+BASE_DIR = Path(__file__).resolve().parent
+
+# Load .env from the same directory as app.py
+ENV_FILE = BASE_DIR / ".env"
 load_dotenv(ENV_FILE)
 
-# Database: use an absolute path when DB_NAME is relative so the app
-# always opens the same database regardless of the working directory.
+# ============================================================
+# DATABASE CONFIGURATION
+# ============================================================
+
 _db_name = os.getenv("DB_NAME", "aviator_live.db").strip()
-DB_NAME = (
-    _db_name
-    if os.path.isabs(_db_name)
-    else os.path.join(BASE_DIR, _db_name)
-)
+
+# Convert relative database paths to absolute paths
+if os.path.isabs(_db_name):
+    DB_NAME = _db_name
+else:
+    DB_NAME = str(BASE_DIR / _db_name)
+
+# Automatically create database directory if missing
+Path(DB_NAME).parent.mkdir(parents=True, exist_ok=True)
+
+# ============================================================
+# AVIATOR GAME CONFIGURATION
+# ============================================================
 
 BETTING_WINDOW = 7.0
 MIN_WITHDRAWAL = 1000.0
 MAX_WITHDRAWAL = 250000.0
 CRASH_DISPLAY_TIME = 2.5
 STARTING_BALANCE = 0.0
+
+# ============================================================
+# SECURITY CONFIGURATION
+# ============================================================
+
+SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError("FLASK_SECRET_KEY is missing from .env")
 
 # ============================================================
 # NEXUS PAY CONFIGURATION
